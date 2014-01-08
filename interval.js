@@ -8,9 +8,13 @@
  * @author Fernando Faria
  */
 function interval(func, wait, times, context) {
+		var
+			  times = times
+			, context = typeof times === 'object' ? times : context;
+
         var interv = (function(w, t) {
                 function i() {
-                        if (typeof t === 'undefined' || t-- > 0) {
+                        if (typeof t !== 'number' || t-- > 0) {
                                 setTimeout(interv, w);
                                 
                                 try {
