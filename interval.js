@@ -1,11 +1,23 @@
 /**
  * A safe setTimeout / setInterval implementation
  * Visando melhorar a interface de timeout e ter um retorno do stack trace adequado, as chamadas assíncronas sempre serão executadas
- * no contexto de um novo objeto limpo, que servirá como máquina de estados.
+ * no contexto de uma máquina de estados.
  * Assim, sempre podemos consultar este objeto com os retornos atualizados e tomar as decisões adequadas.
  *
  * @example
- *		_interval(function() { alert('safe interval!!!') }, 100, 12);
+ *		_interval(function(state) { alert('safe interval!!!') }, 100, 12);
+ *
+ * @example fibonnaci
+ *		// apenas para mostrar as possibilidades de computação desta implementação
+ *		var fib = _async(function(state) {
+ *			if (state.data.length == 0) {
+ *				return 0;
+ *			} else if (state.data.length == 1) {
+ *				return 1;
+ *			} else {
+ *				return state.data[state.data.length - 1] + state.data[state.data.length - 2];
+ *			}
+ *		}, 500, 100);
  *
  * @function _interval
  * @param {Function} func - The function to execute
@@ -13,29 +25,30 @@
  * @param {Number} times - Maximum number of excutions
  * @param {Object} context - Optional; A context to apply the function if needed
  * @return {Object} An object with a clear() method to stop the assync interval
- * @author Fernando Faria - cin_ffaria@uolinc.com
+ * @author Fernando Faria
  */
 function _interval(func, wait, times) {
 	// Máquina de estados para o ciclo de assíncronia
 	var stateMachine = {
 		  maxCycles : times || Number.POSITIVE_ININITY
 		, cycles : 0
-		, data : null
-		, error : null
+		, data : []
+		, error : []
+		, stop : function() {}
 		, clear : function() {}
 		, stopOnError : true
 	};
 	
 	// utilizamos este closure para blindar o escopo da stateMachine
-	var interv = (function(w, t) {
+    var interv = (function(w, t) {
 		function i() {
 			if (typeof t !== 'number' || t-- > 0) {
 				try {
 					// o retorno computado é armazenado em stateMachine.data
-					i.state.data = func.call(i, stateMachine);
+					i.state.data[stateMachine.cycles] = func.call(i, stateMachine);
 					
-					// atualizamos o ciclo
-					stateMachine.cycles++;
+					// se não ocorrerem erros, incremento o ciclo
+					stateMachine.cycles += 1;
 				} catch(e) {
 					/* Se ocorrer algum tipo de exceção paramos a execução.
 					 * Podemos configurar isso já na primeira execução de qualquer chamada de _async.
@@ -53,23 +66,59 @@ function _interval(func, wait, times) {
 					i.state.error = e;
 					
 					/* deixamos que o desenvlvedor decida o que fazer quando o ocorrer algum erro e por isso
-					 * executamos uma última vez a função passada 'func', sem incremetar o ciclo atual
+					 * executamos uma última vez a função passada 'func'
 					 *
 					 * @example
 					 *		var someAsync = _async(function(state1) {
 					 *			if (state1.error) {
 					 *				return _async(function(state2) {
 					 *					// pode fazer alguma coisa
+					 *					state1 = state2; // atualiza a referêcia para a stateMachine atual
 					 *				}, 300, 5);
 					 *			}
 					 *		}, 300, 12);
 					 */
 					try {
-						i.state.data = func.call(i, stateMachine);
+						/* Perceba que pode-se retornar um novo _async a qualquer momento bastando apenas atualizar a stateMachine, como no último exemplo
+						 * mas deve-se tomar cuidado caso deseje-se continuar os ciclos mesmo após alguma exceção, pois podemos perder a referência à stateMachine
+						 * anterior e nunca mais conseguiremos parar as chamadas
+						 *
+						 * @example
+						 *		var myAsync = _async(function(state1) {
+						 *			if (state1.error) {
+						 *				return _async(function(state2) {
+						 *					if (state1 != state2) {
+						 *						// veja que é uma boa prática atualizar a referência da stateMachine
+						 *						// mas se não fizer, a state2 somente será referenciada através de myAsync.state.data.state
+						 *						state1 = state2;
+						 *					}
+						 *					return 3;
+						 *				});
+						 *			}
+						 *		}, 350, 8);
+						 *
+						 * @example
+						 *		var myAsync2 = _async(function(state1) {
+						 *			// aqui, não vamos finalizar o _async quando alguma exceção for lançada
+						 *			state1.stopOnError = false;
+						 *			
+						 *			if (state1.error) {
+						 *				return _async(function(state2) {
+						 *					// perceba que se atualizarmos a referência para a stateMachine2,
+						 *					// perdemos a stateMachine1 e não poderemos mais finalizá-la
+						 *					if (state1 != state2) {
+						 *						state1 = state2;
+						 *					}
+						 *				}, 100, 500);
+						 *			}
+						 *		}, 400, 7);
+						 */
+						i.state.data[stateMachine.stopOnError ? stateMachine.cycles : (stateMachine.cycles += 1)] = func.call(i, stateMachine);
 						
-						if (!stateMachine.stopOnError) {
+						// se estiver configurado para não para a execução mesmo com erros, continuamos a incrementar os ciclos
+						/*if (!stateMachine.stopOnError) {
 							stateMachine.cycles++;
-						}
+						}*/
 					} catch(er) {}
 				}
 				
@@ -85,11 +134,11 @@ function _interval(func, wait, times) {
 		i.clear = stateMachine.clear;
 		
 		return i;
-	})(wait, times);
-
-	setTimeout(interv, wait);
+    })(wait, times);
+    
+    setTimeout(interv, wait);
 	
-	return interv;
+    return interv;
 }
 
 /**
