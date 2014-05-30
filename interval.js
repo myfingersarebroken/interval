@@ -25,13 +25,13 @@
  * @param {Number} times - Maximum number of excutions
  * @param {Object} context - Optional; A context to apply the function if needed
  * @return {Object} An object with a clear() method to stop the assync interval
- * @author Fernando Faria
+ * @author Fernando Faria - cin_ffaria@uolinc.com
  */
 function _interval(func, wait, times) {
 	// Máquina de estados para o ciclo de assíncronia
 	var stateMachine = {
-		  maxCycles : times || Number.POSITIVE_ININITY
-		, cycles : 0
+		  maxCalls : times || Number.POSITIVE_INFINITY
+		, actualCall : 0
 		, data : []
 		, error : []
 		, stop : function() {}
@@ -42,13 +42,13 @@ function _interval(func, wait, times) {
 	// utilizamos este closure para blindar o escopo da stateMachine
     var interv = (function(w, t) {
 		function i() {
-			if (typeof t !== 'number' || t-- > 0) {
+			if (t-- > 0) {
 				try {
 					// o retorno computado é armazenado em stateMachine.data
-					i.state.data[stateMachine.cycles] = func.call(i, stateMachine);
+					i.state.data[stateMachine.actualCall] = func.call(i, stateMachine);
 					
 					// se não ocorrerem erros, incremento o ciclo
-					stateMachine.cycles += 1;
+					stateMachine.actualCall += 1;
 				} catch(e) {
 					/* Se ocorrer algum tipo de exceção paramos a execução.
 					 * Podemos configurar isso já na primeira execução de qualquer chamada de _async.
@@ -63,7 +63,7 @@ function _interval(func, wait, times) {
 					}
 					
 					// salvamos o erro em stateMachine.error
-					i.state.error = e;
+					i.state.error[stateMachine.actualCall] = e;
 					
 					/* deixamos que o desenvlvedor decida o que fazer quando o ocorrer algum erro e por isso
 					 * executamos uma última vez a função passada 'func'
@@ -113,7 +113,7 @@ function _interval(func, wait, times) {
 						 *			}
 						 *		}, 400, 7);
 						 */
-						i.state.data[stateMachine.stopOnError ? stateMachine.cycles : (stateMachine.cycles += 1)] = func.call(i, stateMachine);
+						i.state.data[stateMachine.stopOnError ? stateMachine.actualCall : (stateMachine.actualCall += 1)] = func.call(i, stateMachine);
 						
 						// se estiver configurado para não para a execução mesmo com erros, continuamos a incrementar os ciclos
 						/*if (!stateMachine.stopOnError) {
@@ -147,5 +147,5 @@ function _interval(func, wait, times) {
  * @function _async
  */
 function _async(func, wait, times) {
-	return _interval(func, wait, times);
+	return _interval(func, wait, times || Number.POSITIVE_INFINITY);
 }
