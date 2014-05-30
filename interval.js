@@ -27,7 +27,7 @@ function _interval(func, wait, times) {
 	};
 	
 	// utilizamos este closure para blindar o escopo da stateMachine
-var interv = (function(w, t) {
+	var interv = (function(w, t) {
 		function i() {
 			if (typeof t !== 'number' || t-- > 0) {
 				try {
@@ -85,11 +85,11 @@ var interv = (function(w, t) {
 		i.clear = stateMachine.clear;
 		
 		return i;
-})(wait, times);
+	})(wait, times);
 
-setTimeout(interv, wait);
+	setTimeout(interv, wait);
 	
-return interv;
+	return interv;
 }
 
 /**
