@@ -1,32 +1,3 @@
-/**
- * A safe setTimeout / setInterval implementation
- * Visando melhorar a interface de timeout e ter um retorno do stack trace adequado, as chamadas assíncronas sempre serão executadas
- * no contexto de uma máquina de estados.
- * Assim, sempre podemos consultar este objeto com os retornos atualizados e tomar as decisões adequadas.
- *
- * @example
- *		_interval(function(state) { alert('safe interval!!!') }, 100, 12);
- *
- * @example fibonnaci
- *		// apenas para mostrar as possibilidades de computação desta implementação
- *		var fib = _async(function(state) {
- *			if (state.data.length == 0) {
- *				return 0;
- *			} else if (state.data.length == 1) {
- *				return 1;
- *			} else {
- *				return state.data[state.data.length - 1] + state.data[state.data.length - 2];
- *			}
- *		}, 500, 100);
- *
- * @function _interval
- * @param {Function} func - The function to execute
- * @param {Number} wait - The milisseconds between excutions
- * @param {Number} times - Maximum number of excutions
- * @param {Object} context - Optional; A context to apply the function if needed
- * @return {Object} An object with a clear() method to stop the assync interval
- * @author Fernando Faria - cin_ffaria@uolinc.com
- */
 function _interval(func, wait, times) {
 	// Máquina de estados para o ciclo de assíncronia
 	var stateMachine = {
@@ -34,13 +5,14 @@ function _interval(func, wait, times) {
 		, actualCall : 0
 		, data : []
 		, error : []
+		, continue : function() {}
 		, stop : function() {}
 		, clear : function() {}
 		, stopOnError : true
 	};
 	
 	// utilizamos este closure para blindar o escopo da stateMachine
-    var interv = (function(w, t) {
+var interv = (function(w, t) {
 		function i() {
 			if (t-- > 0) {
 				try {
@@ -134,11 +106,11 @@ function _interval(func, wait, times) {
 		i.clear = stateMachine.clear;
 		
 		return i;
-    })(wait, times);
-    
-    setTimeout(interv, wait);
+})(wait, times);
+
+setTimeout(interv, wait);
 	
-    return interv;
+return interv;
 }
 
 /**
