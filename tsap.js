@@ -43,7 +43,7 @@
  * @return {Object} A state machine of the asynchronous calls
  * @author Fernando Faria - cin_ffaria@uolinc.com
  */
-function _interval(func, wait, times) {
+function _tsap(func, wait, times) {
 	// Máquina de estados para o ciclo de assíncronia
 	var stateMachine = {
 		  maxCalls : times || Number.POSITIVE_INFINITY
@@ -131,6 +131,6 @@ function _interval(func, wait, times) {
  *
  * @function _async
  */
-function _async(func, wait, times) {
-	return _interval(func, wait, times);
+function tsap(func, wait, times) {
+	return _tsap(func, wait, times);
 }
