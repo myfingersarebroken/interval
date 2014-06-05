@@ -44,8 +44,10 @@
 	 * @author Fernando Faria - cin_ffaria@uolinc.com
 	 */
 	function _interval(func, wait, times) {
-		// Máquina de estados para o ciclo de assíncronia
-		var stateMachine = {
+		/**
+		 * @class state
+		 */
+		var state = {
 			  maxCalls : times || Number.POSITIVE_INFINITY
 			, actualCall : 0
 			, data : []
@@ -59,17 +61,17 @@
 			, isRunning : true
 		};
 		
-		// utilizamos este closure para blindar o escopo da stateMachine
+		// utilizamos este closure para blindar o escopo da state
         var interv = (function(w, t) {
 			function i() {
 				if (t-- > 0) {
 					try {
-						// o retorno computado é armazenado em stateMachine.data
-						i.state.data[stateMachine.actualCall] = func.call(i, stateMachine);
-						i.state.lastComputedData = i.state.data[stateMachine.actualCall];
+						// o retorno computado é armazenado em state.data
+						i.state.data[state.actualCall] = func.call(i, state);
+						i.state.lastComputedData = i.state.data[state.actualCall];
 						
 						// se não ocorrerem erros, incremento o ciclo
-						stateMachine.actualCall += 1;
+						state.actualCall += 1;
 					} catch(e) {
 						/* Se ocorrer algum tipo de exceção paramos a execução.
 						 * Podemos configurar isso já na primeira execução de qualquer chamada de _async.
@@ -79,24 +81,24 @@
 						 *			state.stopOnError = false;
 						 *		}, 300, 10);
 						 */
-						if (stateMachine.stopOnError) {
+						if (state.stopOnError) {
 							t = 0;
 						}
 						
-						// salvamos o erro em stateMachine.error
-						i.state.error[stateMachine.actualCall] = e;
-						i.state.lastComputedError = i.state.error[stateMachine.actualCall];
+						// salvamos o erro em state.error
+						i.state.error[state.actualCall] = e;
+						i.state.lastComputedError = i.state.error[state.actualCall];
 						 
 						// se estiver configurado para não parar a execução mesmo com exceções, continuamos a incrementar os ciclos
-						if (!stateMachine.stopOnError) {
-							stateMachine.actualCall += 1
+						if (!state.stopOnError) {
+							state.actualCall += 1
 						}
 						
 						try {
 							/* Deixamos que o desenvolvedor decida qual decisão tomar em caso de erro
 							 */
-							i.state.data[stateMachine.actualCall] = func.call(i, stateMachine);
-							i.state.lastComputedData = i.state.data[stateMachine.actualCall];
+							i.state.data[state.actualCall] = func.call(i, state);
+							i.state.lastComputedData = i.state.data[state.actualCall];
 						} catch(er) {}
 					}
 					
@@ -107,18 +109,17 @@
 			/**
 			 * Para a execução de _async
 			 *
-			 * @inner
 			 * @method clear
 			 * @memberOf _asyncRoutine~state
 			 * @return {null}
 			 */
-			stateMachine.clear = function() {
-				if (stateMachine.isRunning) {
+			state.clear = function() {
+				if (!state.isRunning) {
 					return null;
 				}
 				
 				t = 0;
-				stateMachine.isRunning = false;
+				state.isRunning = false;
 				
 				return null;
 			};
@@ -127,26 +128,26 @@
 			 * após uma chamada a state.clear()
 			 * @see _asyncRoutine~state
 			 *
-			 * @inner
 			 * @method continue
 			 * @memberOf _asyncRoutine~state
 			 * @return {null}
 			 */
-			stateMachine.continue = function() {
-				if (stateMachine.isRunning) {
+			state.continue = function() {
+				if (state.isRunning) {
 					return null;
 				}
 			
-				t = stateMachine.maxCalls - stateMachine.actualCall;
-				stateMachine.isRunning = true;
+				t = state.maxCalls - state.actualCall;
+				state.isRunning = true;
 				setTimeout(interv, w);
 				
 				return null;
 			};
-			// repassamos uma referência de stateMachine para manipulação fora do closure
-			i.state = stateMachine;
+			
+			// repassamos uma referência de state para manipulação fora do closure
+			i.state = state;
 			// apenas mais uma referência para o método clear()
-			i.clear = stateMachine.clear;
+			i.clear = state.clear;
 			
 			return i;
         })(wait, times || Number.POSITIVE_INFINITY);
