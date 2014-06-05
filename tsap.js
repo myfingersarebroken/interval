@@ -1,51 +1,15 @@
-	/**
-	 * A safe setTimeout / setInterval implementation
-	 * Visando melhorar a interface de timeout e ter um retorno do stack trace adequado, as chamadas assíncronas sempre serão executadas
-	 * no contexto de uma state machine.
-	 * Essa state machine sempre é retornada para a variável que armazena _async, assim, permitindo maior controle sobre o que ocorre no programa.
-	 * A rotina passada para _async poderá ter cláusula 'return', esta por sua vez sendo armazenada em sua_variavel.state.data['indice_da_chamada_em_que_ocorreu_a_rotina'].
-	 * A respeito da state machine, ela também é repassada como parâmetro implícito para a rotina passada para _async, sendo possível manipulações
-	 * de dentro da rotina, obtendo maior controle sobre o fluxo de execução.
-	 * Note que a state machine referente à rotina assíncrona é um objeto e, logo, se precisarmos de variáveis compartilhadas entre as chamadas, devemos
-	 * defini-las como atributos de 'state', ao invés de declará-las com a palavra-chave 'var'.
-	 *
-	 * @example
-	 *		var myAsync = _async(function(state) {
-	 *			// Detro desta rotina, o parâmetro intrínseco 'state' representa a state machine desta mesma rotina.
-	 *			// Esta state machine também pode ser referenciada pela variável myAsync através de myAsync.state.
-	 *			// Os atributos customizados definidos para 'state' são compartilhados entre as chamadas, logo, se definirmos um atributo
-	 *			// state.myName, podemos acessá-lo nas próximas chamadas tanto por state.myName quanto por myAsync.state.myName.
-	 *			// Para não sobrescrever o atributo a cada ciclo de excução da rotina, como boa prática sempre verificaremos se o atributo
-	 *			// já existe, como segue abaixo:
-	 *			if (!state.mySharedAttribute) {
-	 *				state.mySharedAttribute = 'my value';
-	 *			}
-	 *		}, 250, 35);
-	 *
-	 *
-	 * @example fibonnaci
-	 *		// apenas para ilustrar as possibilidades de computação
-	 *		var fib = _async(function(state) {
-	 *			if(state.actualCall == 0) {
-	 *				return 0;
-	 *			} else if(state.actualCall == 1) {
-	 *				return 1;
-	 *			} else {
-	 *				return state.data[state.actualCall - 1] + state.data[state.actualCall - 2];
-	 *			}
-	 *		}, 1000);
-	 *
-	 *
-	 * @function _interval
-	 * @param {_asyncRoutine} func - The routine to execute
-	 * @param {Number} wait - The milisseconds between excutions
-	 * @param {Number} times - Maximum number of excutions
-	 * @return {Object} A state machine of the asynchronous calls
-	 * @author Fernando Faria - cin_ffaria@uolinc.com
-	 */
 	function _interval(func, wait, times) {
 		/**
-		 * @class state
+		 * @namespace state
+		 * @property {Number} maxCalls - A quantidade máxima de chamadas à rotina ou função.
+		 * @property {Number} actualCall - A cada chamada da rotina ou função, esta propriedade é incrementada, indicando 
+		 *									a chamada atual.
+		 * @property {Array} - A cada chamada, o valor computado, caso haja cláusula return, é armazedo no índice correspondente a chamada.
+		 * @property {*} lastComputedData - Via de regra, sempre precisaremos do ultimo valor computado e esta propriedade é para facilitar o acesso.
+		 * @property {Error[]} error - Se ocorrer alguma exceção, ela é armazenada no índice em que ocorre a chamada da rotina ou função.
+		 * @property {Error} lastComputedError - Idem state.lastComputedData, só que armazena o último erro =].
+		 * @property {Boolean} stopOnError - Indica se as chamadas devem ou não parar quando ocorrer algum tipo de exception.
+		 * @property {Boolean} isRunning - Auto descritiva xD
 		 */
 		var state = {
 			  maxCalls : times || Number.POSITIVE_INFINITY
@@ -64,6 +28,8 @@
 		// utilizamos este closure para blindar o escopo da state
         var interv = (function(w, t) {
 			function i() {
+				if (t == 0) { state.isRunning = false; }
+			
 				if (t-- > 0) {
 					try {
 						// o retorno computado é armazenado em state.data
@@ -95,7 +61,7 @@
 						}
 						
 						try {
-							/* Deixamos que o desenvolvedor decida qual decisão tomar em caso de erro
+							/* Deixamos que o desenvolvedor decida qual o que fazer em caso de erro
 							 */
 							i.state.data[state.actualCall] = func.call(i, state);
 							i.state.lastComputedData = i.state.data[state.actualCall];
@@ -110,7 +76,7 @@
 			 * Para a execução de _async
 			 *
 			 * @method clear
-			 * @memberOf _asyncRoutine~state
+			 * @memberOf state
 			 * @return {null}
 			 */
 			state.clear = function() {
@@ -129,7 +95,7 @@
 			 * @see _asyncRoutine~state
 			 *
 			 * @method continue
-			 * @memberOf _asyncRoutine~state
+			 * @memberOf state
 			 * @return {null}
 			 */
 			state.continue = function() {
@@ -146,8 +112,10 @@
 			
 			// repassamos uma referência de state para manipulação fora do closure
 			i.state = state;
-			// apenas mais uma referência para o método clear()
+			// apenas mais uma referência para facilitar o acesso
 			i.clear = state.clear;
+			// apenas mais uma referência para facilitar o acesso
+			i.continue = state.continue;
 			
 			return i;
         })(wait, times || Number.POSITIVE_INFINITY);
