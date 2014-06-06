@@ -55,6 +55,7 @@
 		 * @property {Error} lastComputedError - Idem state.lastComputedData, só que armazena o último erro =].
 		 * @property {Boolean} stopOnError - Indica se as chamadas devem ou não parar quando ocorrer algum tipo de exception.
 		 * @property {Boolean} isRunning - Auto descritiva xD
+		 * @property {Boolean | Object} promise - Se esta implementação for utilizada como uma promise, representa o estado dessa promise.
 		 */
 		var state = {
 			  maxCalls : times || Number.POSITIVE_INFINITY
@@ -68,9 +69,10 @@
 			, clear : function() {}
 			, stopOnError : true
 			, isRunning : true
+			, promise : false
 		};
 		
-		// utilizamos este closure para blindar o escopo da state
+		// utilizamos este closure para blindar o escopo de state
         var interv = (function(w, t) {
 			function i() {
 				if (t == 0) { state.isRunning = false; }
@@ -134,10 +136,11 @@
 				
 				return null;
 			};
+			
 			/**
 			 * Método para continuar a execução a partir do último estado computado
 			 * após uma chamada a state.clear()
-			 * @see _asyncRoutine~state
+			 * @see _asyncRoutine
 			 *
 			 * @method continue
 			 * @memberOf state
@@ -154,6 +157,32 @@
 				
 				return null;
 			};
+			
+			/**
+			 * Uma implementação de promises
+			 *
+			 * @method then
+			 * @memberOf state
+			 * @return {null}
+			 */
+			/*
+			state.then = function(obj) {
+				state.promise = {
+					  status : 'PENDING'
+					, onFulfillFn : obj.onFulfilled || function onFulfilled() {}
+					, onRejectFn : obj.onRejected || function onRejected() {}
+					, reason : null
+					, value : null
+				}
+				
+				// retornamos um _async que irá observar a primeira chamada
+				return _async(function(promise) {
+					if (state.lastComputedError != null) {
+						return state.promise.onRejectFn();
+					}
+				}, w);
+			};
+			*/
 			
 			// repassamos uma referência de state para manipulação fora do closure
 			i.state = state;
