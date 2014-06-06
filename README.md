@@ -1,4 +1,4 @@
-That's a Promise!!!
+That's a fuck'n Promise!!!
 ========
 
-tsap js
+tsafp js
