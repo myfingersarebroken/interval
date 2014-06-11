@@ -207,8 +207,8 @@
 	/**
 	 * A facade for _interval
 	 *
-	 * @function _async
+	 * @function _tsnafp
 	 */
-	function _async(func, wait, times) {
+	function _tsnafp(func, wait, times) {
 		return _interval(func, wait, times);
 	}
