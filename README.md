@@ -1,4 +1,7 @@
-That's a fuck'n Promise!!!
+That's not a fuck'n Promise!!!
 ========
 
-tsafp js
+tsnafp js
+
+
+But you can rename it, if u wish xD
