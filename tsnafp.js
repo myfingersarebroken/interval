@@ -10,7 +10,7 @@
 	 * defini-las como atributos de 'state', ao invés de declará-las com a palavra-chave 'var'.
 	 *
 	 * @example
-	 *		var myAsync = _async(function(state) {
+	 *		var myAsync = _async(null, function(state) {
 	 *			// Detro desta rotina, o parâmetro intrínseco 'state' representa a state machine desta mesma rotina.
 	 *			// Esta state machine também pode ser referenciada pela variável myAsync através de myAsync.state.
 	 *			// Os atributos customizados definidos para 'state' são compartilhados entre as chamadas, logo, se definirmos um atributo
@@ -26,7 +26,7 @@
 	 * @example
 	 *		// fibonnaci
 	 *		// apenas para ilustrar as possibilidades de computação
-	 *		var fib = _async(function(state) {
+	 *		var fib = _async(null, function(state) {
 	 *			if(state.actualCall == 0) {
 	 *				return 0;
 	 *			} else if(state.actualCall == 1) {
@@ -39,21 +39,21 @@
 	 * @example
 	 *		// Exemplos de utilização dos atributos de state.
 	 *		// Lembrando que state também é acessível, neste exemplo, por someAsync.state
-	 *		var someAsync = _async(function(state) {
+	 *		var someAsync = _async(null, function(state) {
 	 *			if(state.)
 	 *		});
 	 *
 	 *		
 	 *
 	 * @function _interval
-	 * @param {*} userData - Qualquer dado que deva ser agregado a state. O que ocorre é que quando itereamos laços ou objetos,
+	 * @param {*} outData - Qualquer dado que deva ser agregado a state. O que ocorre é que quando itereamos laços ou objetos,
 	 *			se passarmos a referência, na horas de computar com este dados, etc...
 	 * @param {_asyncRoutine} func - A rotina ou função a ser excutada
 	 * @param {Number} wait - O tempo entre as execuções, em milissegundos
 	 * @param {?Number} times - A quantidade máxima de chamadas ou nada para chamadas infinitas
 	 * @author Fernando Faria
 	 */
-	function _interval(userData, func, wait, times) {
+	function _interval(outData, func, wait, times) {
 		/**
 		 * @namespace state
 		 * @property {Number} maxCalls - A quantidade máxima de chamadas à rotina ou função.
@@ -80,7 +80,7 @@
 			, clear : function() {}
 			, stopOnError : true
 			, isRunning : true
-			, userData : userData
+			, args : outData
 		//	 , promise : false
 		};
 		
@@ -189,7 +189,7 @@
 				}
 				
 				// retornamos um _async que irá observar a primeira chamada
-				return _async(function(promise) {
+				return _async(null, function(promise) {
 					if (state.lastComputedError != null) {
 						return state.promise.onRejectFn();
 					}
