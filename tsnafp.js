@@ -24,7 +24,7 @@
 	 *
 	 *
 	 * @example
-	 *		/// fibonnaci
+	 *		// fibonnaci
 	 *		// apenas para ilustrar as possibilidades de computação
 	 *		var fib = _async(function(state) {
 	 *			if(state.actualCall == 0) {
@@ -36,14 +36,24 @@
 	 *			}
 	 *		}, 1000);
 	 *
+	 * @example
+	 *		// Exemplos de utilização dos atributos de state.
+	 *		// Lembrando que state também é acessível, neste exemplo, por someAsync.state
+	 *		var someAsync = _async(function(state) {
+	 *			if(state.)
+	 *		});
+	 *
+	 *		
 	 *
 	 * @function _interval
+	 * @param {*} userData - Qualquer dado que deva ser agregado a state. O que ocorre é que quando itereamos laços ou objetos,
+	 *			se passarmos a referência, na horas de computar com este dados, etc...
 	 * @param {_asyncRoutine} func - A rotina ou função a ser excutada
 	 * @param {Number} wait - O tempo entre as execuções, em milissegundos
 	 * @param {?Number} times - A quantidade máxima de chamadas ou nada para chamadas infinitas
 	 * @author Fernando Faria
 	 */
-	function _interval(func, wait, times) {
+	function _interval(userData, func, wait, times) {
 		/**
 		 * @namespace state
 		 * @property {Number} maxCalls - A quantidade máxima de chamadas à rotina ou função.
@@ -64,18 +74,21 @@
 			, lastComputedData : null
 			, error : []
 			, lastComputedError : null
-			, continue : function() {}
+			, lastCall : false
+			, proceed : function() {}
 			, then : function() {}
 			, clear : function() {}
 			, stopOnError : true
 			, isRunning : true
-			, promise : false
+			, userData : userData
+		//	 , promise : false
 		};
 		
 		// utilizamos este closure para blindar o escopo de state
         var interv = (function(w, t) {
 			function i() {
 				if (t == 0) { state.isRunning = false; }
+				if (t == 1) { state.lastCall = true; }
 			
 				if (t-- > 0) {
 					try {
@@ -101,18 +114,18 @@
 						// salvamos o erro em state.error
 						i.state.error[state.actualCall] = e;
 						i.state.lastComputedError = i.state.error[state.actualCall];
-						 
-						// se estiver configurado para não parar a execução mesmo com exceções, continuamos a incrementar os ciclos
-						if (!state.stopOnError) {
-							state.actualCall += 1
-						}
 						
 						try {
 							/* Deixamos que o desenvolvedor decida qual o que fazer em caso de erro
 							 */
 							i.state.data[state.actualCall] = func.call(i, state);
 							i.state.lastComputedData = i.state.data[state.actualCall];
-						} catch(er) {}
+						} catch(er) {
+							// se estiver configurado para não parar a execução mesmo com exceções, continuamos a incrementar os ciclos
+							if (!state.stopOnError) {
+								state.actualCall += 1
+							}
+						}
 					}
 					
 					setTimeout(interv, w);
@@ -146,7 +159,7 @@
 			 * @memberOf state
 			 * @return {null}
 			 */
-			state.continue = function() {
+			state.proceed = function() {
 				if (state.isRunning) {
 					return null;
 				}
@@ -189,7 +202,7 @@
 			// apenas mais uma referência para facilitar o acesso
 			i.clear = state.clear;
 			// apenas mais uma referência para facilitar o acesso
-			i.continue = state.continue;
+			i.proceed = state.proceed;
 			
 			return i;
         })(wait, times || Number.POSITIVE_INFINITY);
@@ -205,10 +218,11 @@
 	 */
 	
 	/**
-	 * A facade for _interval
+	 * Apenas um facade para _interval
+	 * @see _interval
 	 *
-	 * @function _tsnafp
+	 * @function _async
 	 */
-	function _tsnafp(func, wait, times) {
-		return _interval(func, wait, times);
+	function _async(userData, func, wait, times) {
+		return _interval(userData, func, wait, times);
 	}
