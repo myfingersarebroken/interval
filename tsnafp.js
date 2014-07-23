@@ -12,7 +12,13 @@
 	 */
 	function _interval(outData,func,wait,times){var state={maxCalls:times||Number.POSITIVE_INFINITY,actualCall:0,data:[],lastComputedData:null,error:[],lastComputedError:null,lastCall:false,proceed:function(){},then:function(){},clear:function(){},stopOnError:true,isRunning:true,args:outData};var interv=(function(w,t){function i(){if(t==0){state.isRunning=false;}if(t==1){state.lastCall=true;}if(t-->0){try{i.state.data[state.actualCall]=func.call(i,state);i.state.lastComputedData=i.state.data[state.actualCall];state.actualCall+=1;}catch(e){if(state.stopOnError){t=0;}i.state.error[state.actualCall]=e;i.state.lastComputedError=i.state.error[state.actualCall];try{i.state.data[state.actualCall]=func.call(i,state);i.state.lastComputedData=i.state.data[state.actualCall];}catch(er){if(!state.stopOnError){state.actualCall+=1;}}}setTimeout(interv,w);}}state.clear=function(){if(!state.isRunning){return null;}t=0;state.isRunning=false;return null;};state.proceed=function(){if(state.isRunning){return null;}t=state.maxCalls-state.actualCall;state.isRunning=true;setTimeout(interv,w);return null;};i.state=state;i.clear=state.clear;i.proceed=state.proceed;return i;})(wait,times||Number.POSITIVE_INFINITY);setTimeout(interv,wait);return interv;}
 	function _async(userData,func,wait,times){return _interval(userData,func,wait,times);}
-
+	
+	/**
+	 * Copyright © 2014 Fernando Faria <fernando.al.faria@gmail.com> <github.com/myfingersarebroken/simpleOverload>
+	 * Dual licensed under GPLv2 & MIT
+	 */
+	function _$overload(pointer,args,context){var regex=/function\s+(\w+)s*/,types=[],executed;for(var i=0;i<args.length;i++){types.push(regex.exec(args[i].constructor.toString())[1]);}return pointer[types.toString()].apply(context,args);}function _$$overload(pointer,args,context){var types=[],i,executed;for(i=0;i<args.length;i++){types.push(args[i].aer$class);}try{executed=pointer[types.toString()].apply(context,args);}catch(e){throw Error.call(context,context.aer$class+" has no such signature ["+types.toString()+"] for the method "+/function\s+(\w+)s*/.exec(pointer.toString()));return;}return executed;}function _$over(){return _$$overload(_$over,arguments,this);}_$over.Object=function(o){return function(){return _$$overload(o,arguments,this);};};
+	
 	var
 		// aer special directives
 		  _directives = {
@@ -93,56 +99,6 @@
 		}
 		, _waiting = 0
 		, _activeScope;
-	
-	/**
-	 * For security reasons with the evaluated function that is created when extend other classes,
-	 * we use an secure overload method based on the constructor that ignores aer$classname
-	 */
-	function _$overload(pointer, args, context) { 'use strict';
-		var
-			  regex = /function\s+(\w+)s*/
-			, types = []
-			, executed;
-
-		for (var i = 0; i < args.length; i++) {
-			types.push(regex.exec(args[i].constructor.toString())[1]);
-		}
-
-		return pointer[types.toString()].apply(context, args);
-	}
-	
-	/**
-	 * A great way to overload functions!!! XD
-	 * The modified overload that works with the aer$classname prototype attribute
-	 */
-	function _$$overload(pointer, args, context) { 'use strict';
-		var types = [], i, executed;
-		
-		for (i = 0; i < args.length; i++) {
-			types.push(args[i].aer$class);
-		}
-		
-		try {
-			executed = pointer[types.toString()].apply(context, args);
-		} catch (e) {
-			throw Error.call(context, context.aer$class + ' has no such signature [' + types.toString() + '] for the method ' + /function\s+(\w+)s*/.exec(pointer.toString()));
-			return;
-		}
-		
-		return executed;
-	}
-	
-	/**
-	 * This must be an object that aer['@class'] can recognize overloaded classes implementations
-	 */
-	function _$over() { 'use strict';
-		return _$$overload(_$over, arguments, this);
-	}
-	_$over['Object'] = function(o) { 'use strict';
-		return function() {
-			return _$$overload(o, arguments, this);
-		}
-	}
 	
 	/**
 	 * @function _$new
@@ -342,10 +298,10 @@
 	/**
 	 * @function main
 	 */
-	function _$main() {
+	function _$main(program) {
 		_async(null, function(state) {
-			
-		});
+			program();
+		}, _cfg.asyncTime);
 	}
 	
 	// installing the primitives
