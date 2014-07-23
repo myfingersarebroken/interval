@@ -1,228 +1,367 @@
+/**
+ * AER
+ *
+ * Copyright © 2014 Fernando Faria <fernando.al.faria@gmail.com> <github.com/myfingersarebroken/aer>
+ * Dual licensed under GPLv2 & MIT
+ */
+ 
+(function(global) { 'use strict';
 	/**
-	 * A safe setTimeout / setInterval implementation
-	 * Visando melhorar a interface de timeout e ter um retorno do stack trace adequado, as chamadas assíncronas sempre serão executadas
-	 * no contexto de uma state machine.
-	 * Essa state machine sempre é retornada para a variável que armazena _async, assim, permitindo maior controle sobre o que ocorre no programa.
-	 * A rotina passada para _async poderá ter cláusula 'return', esta por sua vez sendo armazenada em sua_variavel.state.data['indice_da_chamada_em_que_ocorreu_a_rotina'].
-	 * A respeito da state machine, ela também é repassada como parâmetro implícito para a rotina passada para _async, sendo possível manipulações
-	 * de dentro da rotina, obtendo maior controle sobre o fluxo de execução.
-	 * Note que a state machine referente à rotina assíncrona é um objeto e, logo, se precisarmos de variáveis compartilhadas entre as chamadas, devemos
-	 * defini-las como atributos de 'state', ao invés de declará-las com a palavra-chave 'var'.
-	 *
-	 * @example
-	 *		var myAsync = _async(null, function(state) {
-	 *			// Detro desta rotina, o parâmetro intrínseco 'state' representa a state machine desta mesma rotina.
-	 *			// Esta state machine também pode ser referenciada pela variável myAsync através de myAsync.state.
-	 *			// Os atributos customizados definidos para 'state' são compartilhados entre as chamadas, logo, se definirmos um atributo
-	 *			// state.myName, podemos acessá-lo nas próximas chamadas tanto por state.myName quanto por myAsync.state.myName.
-	 *			// Para não sobrescrever o atributo a cada ciclo de excução da rotina, como boa prática sempre verificaremos se o atributo
-	 *			// já existe, como segue abaixo:
-	 *			if (!state.mySharedAttribute) {
-	 *				state.mySharedAttribute = 'my value';
-	 *			}
-	 *		}, 250, 35);
-	 *
-	 *
-	 * @example
-	 *		// fibonnaci
-	 *		// apenas para ilustrar as possibilidades de computação
-	 *		var fib = _async(null, function(state) {
-	 *			if(state.actualCall == 0) {
-	 *				return 0;
-	 *			} else if(state.actualCall == 1) {
-	 *				return 1;
-	 *			} else {
-	 *				return state.data[state.actualCall - 1] + state.data[state.actualCall - 2];
-	 *			}
-	 *		}, 1000);
-	 *
-	 * @example
-	 *		// Exemplos de utilização dos atributos de state.
-	 *		// Lembrando que state também é acessível, neste exemplo, por someAsync.state
-	 *		var someAsync = _async(null, function(state) {
-	 *			if(state.)
-	 *		});
-	 *
-	 *		
-	 *
-	 * @function _interval
-	 * @param {*} outData - Qualquer dado que deva ser agregado a state. O que ocorre é que quando itereamos laços ou objetos,
-	 *			se passarmos a referência, na horas de computar com este dados, etc...
-	 * @param {_asyncRoutine} func - A rotina ou função a ser excutada
-	 * @param {Number} wait - O tempo entre as execuções, em milissegundos
-	 * @param {?Number} times - A quantidade máxima de chamadas ou nada para chamadas infinitas
-	 * @author Fernando Faria
+	 * Copyright © 2014 Fernando Faria <fernando.al.faria@gmail.com> <github.com/myfingersarebroken/interval>
+	 * Dual licensed under GPLv2 & MIT
 	 */
-	function _interval(outData, func, wait, times) {
-		/**
-		 * @namespace state
-		 * @property {Number} maxCalls - A quantidade máxima de chamadas à rotina ou função.
-		 * @property {Number} actualCall - A cada chamada da rotina ou função, esta propriedade é incrementada, indicando 
-		 *									a chamada atual.
-		 * @property {Array} - A cada chamada, o valor computado, caso haja cláusula return, é armazedo no índice correspondente a chamada.
-		 * @property {*} lastComputedData - Via de regra, sempre precisaremos do ultimo valor computado e esta propriedade é para facilitar o acesso.
-		 * @property {Error[]} error - Se ocorrer alguma exceção, ela é armazenada no índice em que ocorre a chamada da rotina ou função.
-		 * @property {Error} lastComputedError - Idem state.lastComputedData, só que armazena o último erro =].
-		 * @property {Boolean} stopOnError - Indica se as chamadas devem ou não parar quando ocorrer algum tipo de exception.
-		 * @property {Boolean} isRunning - Auto descritiva xD
-		 * @property {Boolean | Object} promise - Se esta implementação for utilizada como uma promise, representa o estado dessa promise.
-		 */
-		var state = {
-			  maxCalls : times || Number.POSITIVE_INFINITY
-			, actualCall : 0
-			, data : []
-			, lastComputedData : null
-			, error : []
-			, lastComputedError : null
-			, lastCall : false
-			, proceed : function() {}
-			, then : function() {}
-			, clear : function() {}
-			, stopOnError : true
-			, isRunning : true
-			, args : outData
-		//	 , promise : false
-		};
+	function _interval(outData,func,wait,times){var state={maxCalls:times||Number.POSITIVE_INFINITY,actualCall:0,data:[],lastComputedData:null,error:[],lastComputedError:null,lastCall:false,proceed:function(){},then:function(){},clear:function(){},stopOnError:true,isRunning:true,args:outData};var interv=(function(w,t){function i(){if(t==0){state.isRunning=false;}if(t==1){state.lastCall=true;}if(t-->0){try{i.state.data[state.actualCall]=func.call(i,state);i.state.lastComputedData=i.state.data[state.actualCall];state.actualCall+=1;}catch(e){if(state.stopOnError){t=0;}i.state.error[state.actualCall]=e;i.state.lastComputedError=i.state.error[state.actualCall];try{i.state.data[state.actualCall]=func.call(i,state);i.state.lastComputedData=i.state.data[state.actualCall];}catch(er){if(!state.stopOnError){state.actualCall+=1;}}}setTimeout(interv,w);}}state.clear=function(){if(!state.isRunning){return null;}t=0;state.isRunning=false;return null;};state.proceed=function(){if(state.isRunning){return null;}t=state.maxCalls-state.actualCall;state.isRunning=true;setTimeout(interv,w);return null;};i.state=state;i.clear=state.clear;i.proceed=state.proceed;return i;})(wait,times||Number.POSITIVE_INFINITY);setTimeout(interv,wait);return interv;}
+	function _async(userData,func,wait,times){return _interval(userData,func,wait,times);}
+
+	var
+		// aer special directives
+		  _directives = {
+			  '@new' : _$new
+			, '@class' : _$class
+			, '@overload' : _$over
+			, '@require' : ''
+			, '@main' : ''
+			, '@register' : ''
+			, '@package' : ''
+			, '@async' : _async
+		}
+		// reserved keywords and respective Regex
+		, _reserved = {
+			  '@protected' : ''
+			, '@public' : ''
+			, '@private' : ''
+			, '@privileged' : ''
+		}
+		// configs
+		, _cfg = {
+			  asyncTime : 25
+			, asyncMaxAttempts : 10
+			, asyncMinimumAttempts : 1
+		}
+		// registered aer data types and respective regex
+		, _classes = {
+			  'Number' : {
+				  regex : ''
+				, constructor : Number
+				, ready : true
+			}
+			, 'String' : {
+				  regex : ''
+				, constructor : String
+				, ready : true
+			}
+			, 'RegExp' : {
+				  regex : ''
+				, constructor : RegExp
+				, ready : true
+			}
+			, 'Object' : {
+				  regex : ''
+				, constructor : Object
+				, ready : true
+			}
+			, 'Array' : {
+				  regex : ''
+				, constructor : Array
+				, ready : true
+			}
+			, 'Boolean' : {
+				  regex : ''
+				, constructor : Boolean
+				, ready : true
+			}
+			, 'Error' : {
+				  regex : ''
+				, constructor : Error
+				, ready : true
+			}
+			, 'Date' : {
+				  regex : ''
+				, constructor : Date
+				, ready : true
+			}
+			, 'Function' : {
+				  regex : ''
+				, constructor : Function
+				, ready : true
+			}
+		}
+		// saves the namespace implementations
+		, _chain = {}
+		, _paths = {
+			  root : null
+		}
+		, _waiting = 0
+		, _activeScope;
+	
+	/**
+	 * For security reasons with the evaluated function that is created when extend other classes,
+	 * we use an secure overload method based on the constructor that ignores aer$classname
+	 */
+	function _$overload(pointer, args, context) { 'use strict';
+		var
+			  regex = /function\s+(\w+)s*/
+			, types = []
+			, executed;
+
+		for (var i = 0; i < args.length; i++) {
+			types.push(regex.exec(args[i].constructor.toString())[1]);
+		}
+
+		return pointer[types.toString()].apply(context, args);
+	}
+	
+	/**
+	 * A great way to overload functions!!! XD
+	 * The modified overload that works with the aer$classname prototype attribute
+	 */
+	function _$$overload(pointer, args, context) { 'use strict';
+		var types = [], i, executed;
 		
-		// utilizamos este closure para blindar o escopo de state
-        var interv = (function(w, t) {
-			function i() {
-				if (t == 0) { state.isRunning = false; }
-				if (t == 1) { state.lastCall = true; }
+		for (i = 0; i < args.length; i++) {
+			types.push(args[i].aer$class);
+		}
+		
+		try {
+			executed = pointer[types.toString()].apply(context, args);
+		} catch (e) {
+			throw Error.call(context, context.aer$class + ' has no such signature [' + types.toString() + '] for the method ' + /function\s+(\w+)s*/.exec(pointer.toString()));
+			return;
+		}
+		
+		return executed;
+	}
+	
+	/**
+	 * This must be an object that aer['@class'] can recognize overloaded classes implementations
+	 */
+	function _$over() { 'use strict';
+		return _$$overload(_$over, arguments, this);
+	}
+	_$over['Object'] = function(o) { 'use strict';
+		return function() {
+			return _$$overload(o, arguments, this);
+		}
+	}
+	
+	/**
+	 * @function _$new
+	 */
+	function _$new(aerClass) {
+		return (new _classes[aerClass].constructor);
+	}
+	
+	/**
+	 * @function _$class
+	 */
+	function _$class(namespace) {
+		var _transitory = new _$transitory();
+		_transitory.namespace = namespace;
+		return _transitory;
+	}
+	
+	/**
+	 * @function _$require
+	 */
+	Object.prototype.aer$class = 'Object';
+	Array.prototype.aer$class = 'Array';
+	var _$require = _$over({
+		/**
+		 * @function _$require
+		 * @param {String} namespace
+		 */
+		  'String' : function(namespace) {
+			// if the class already exists, cancel the import
+			if (!!_classes[namespace]) { return; }
 			
-				if (t-- > 0) {
-					try {
-						// o retorno computado é armazenado em state.data
-						i.state.data[state.actualCall] = func.call(i, state);
-						i.state.lastComputedData = i.state.data[state.actualCall];
-						
-						// se não ocorrerem erros, incremento o ciclo
-						state.actualCall += 1;
-					} catch(e) {
-						/* Se ocorrer algum tipo de exceção paramos a execução.
-						 * Podemos configurar isso já na primeira execução de qualquer chamada de _async.
-						 *
-						 * @example
-						 *		var someAsync = _async(function(state) {
-						 *			state.stopOnError = false;
-						 *		}, 300, 10);
-						 */
-						if (state.stopOnError) {
-							t = 0;
-						}
-						
-						// salvamos o erro em state.error
-						i.state.error[state.actualCall] = e;
-						i.state.lastComputedError = i.state.error[state.actualCall];
-						
-						try {
-							/* Deixamos que o desenvolvedor decida qual o que fazer em caso de erro
-							 */
-							i.state.data[state.actualCall] = func.call(i, state);
-							i.state.lastComputedData = i.state.data[state.actualCall];
-						} catch(er) {
-							// se estiver configurado para não parar a execução mesmo com exceções, continuamos a incrementar os ciclos
-							if (!state.stopOnError) {
-								state.actualCall += 1
-							}
+			_async([namespace], function() {
+				var 
+					  path = state.args[0].split('.').join('/') + '.js'
+					, s = document.createElement('script');
+					
+				s.type = 'text/javascript';
+				s.src = path;
+				
+				document.getElementsByTagName('head')[0].appendChild(s);
+			}, _cfg.asyncTime, 1);
+		}
+		/**
+		 * @method _$require
+		 * @param {String[]} arr
+		 */
+		, 'Array' : function(arr) {
+			for (var i = 0; i < arr.length; i++) {
+				_$require(arr[i]);
+			}
+		}
+	}); 
+	
+	/**
+	 * @function _$inject
+	 * @param {Function} implementation
+	 * @param {Array} dependencies
+	 */
+	function _$inject(implementation, dependencies) {
+		var
+			  fnStart = 'function() {'
+			, fnBody = ''
+			, fnEnd = '}';
+		
+		for (var i = 0, l = dependencies.length; i < l; i++) {
+			fnBody += '_classes[\'' + dependencies[i] + '\'].constructor.apply(this, arguments);'// : dependencies[i] + '.apply(this, arguments);';
+		}
+		
+		fnBody += 'implementation.apply(this, arguments);';
+
+		return eval('(' + fnStart + fnBody + fnEnd + ')');
+	}
+	
+	/**
+	 * @function _$injectPrivileged
+	 */
+	function _$injectPrivileged() {
+		
+	}
+	
+	/**
+	 * @function _$transitory
+	 */
+	function _$transitory() {
+		this.namespace = null;
+		this.heritage = null;
+		this.constructor = null;
+	}
+	_$transitory.prototype = {
+		  aer$class : '_$transitory'
+		/**
+		 * @method '@inherit'
+		 */
+		, '@inherit' : function() {
+			this.heritage = Array.prototype.slice.call(arguments);
+			return this;
+		}
+		/**
+		 * @method '@prototype'
+		 * @param {Object} methods - An object with attributes that are functions
+		 */
+		, '@prototype' : function(methods) {
+			_async([methods, this], function(state) {
+				if (!!state.args[1].constructor) {
+					state.clear();
+					
+					for (var prop in state.args[0]) {
+						if (typeof state.args[0][prop] == 'object') {
+							state.args[1].constructor.prototype[prop] = _$over(state.args[0][prop]);
+						} else {
+							state.args[1].constructor.prototype[prop] = state.args[0][prop];
 						}
 					}
 					
-					setTimeout(interv, w);
+					state.args[1].constructor.prototype.aer$class = state.args[1].namespace;
 				}
+			}, _cfg.asyncTime);
+			
+			return this;
+		}
+		/**
+		 * @method '@privileged'
+		 * @param {Object} methods - An object with attributes that are functions
+		 */
+		, '@privileged' : function(methods) {
+		
+		}
+		/**
+		 * @method '@'
+		 * @param {Function} constructor
+		 */
+		, '@' : function(constructor) {
+			var _supers = !!this.heritage ? this.heritage : [];
+			
+			_async([this, constructor], function(state) {
+				_$chain(state.args[0], state.args[1]);
+			}, _cfg.asyncTime, 1);
+			
+			if (_supers.length > 0) {
+				_async([this, _supers], function(state) {
+					if (!!state.args[0].constructor) {
+						state.clear();
+						
+						state.args[0].constructor.prototype.$uper = {};
+						
+						for (var i = 0; i < state.args[1].length; i++) {
+							state.args[0].constructor.prototype.$uper[state.args[1][i]] = _classes[state.args[1][i]].constructor;
+						
+							for (var prop in _classes[state.args[1][i]].constructor.prototype) {
+								if (prop !== 'aer$class') {
+									state.args[0].constructor.prototype[prop] = _classes[state.args[1][i]].constructor.prototype[prop];
+								}
+							}
+						}
+					}
+				}, _cfg.asyncTime);
 			}
 			
-			/**
-			 * Para a execução de _async
-			 *
-			 * @method clear
-			 * @memberOf state
-			 * @return {null}
-			 */
-			state.clear = function() {
-				if (!state.isRunning) {
-					return null;
-				}
-				
-				t = 0;
-				state.isRunning = false;
-				
-				return null;
-			};
-			
-			/**
-			 * Método para continuar a execução a partir do último estado computado
-			 * após uma chamada a state.clear()
-			 * @see _asyncRoutine
-			 *
-			 * @method continue
-			 * @memberOf state
-			 * @return {null}
-			 */
-			state.proceed = function() {
-				if (state.isRunning) {
-					return null;
-				}
-			
-				t = state.maxCalls - state.actualCall;
-				state.isRunning = true;
-				setTimeout(interv, w);
-				
-				return null;
-			};
-			
-			/**
-			 * Uma implementação de promises
-			 *
-			 * @method then
-			 * @memberOf state
-			 * @return {null}
-			 */
-			/*
-			state.then = function(obj) {
-				state.promise = {
-					  status : 'PENDING'
-					, onFulfillFn : obj.onFulfilled || function onFulfilled() {}
-					, onRejectFn : obj.onRejected || function onRejected() {}
-					, reason : null
-					, value : null
-				}
-				
-				// retornamos um _async que irá observar a primeira chamada
-				return _async(null, function(promise) {
-					if (state.lastComputedError != null) {
-						return state.promise.onRejectFn();
-					}
-				}, w);
-			};
-			*/
-			
-			// repassamos uma referência de state para manipulação fora do closure
-			i.state = state;
-			// apenas mais uma referência para facilitar o acesso
-			i.clear = state.clear;
-			// apenas mais uma referência para facilitar o acesso
-			i.proceed = state.proceed;
-			
-			return i;
-        })(wait, times || Number.POSITIVE_INFINITY);
-        
-        setTimeout(interv, wait);
-		
-        return interv;
-	} /* @end _interval */
-	
-	/**
-	 * @callback _asyncRoutine
-	 * @param {Object} state - Uma state machine compartilhada entre os ciclos de _async
-	 */
-	
-	/**
-	 * Apenas um facade para _interval
-	 * @see _interval
-	 *
-	 * @function _async
-	 */
-	function _async(userData, func, wait, times) {
-		return _interval(userData, func, wait, times);
+			return this;
+		}
 	}
+	
+	/**
+	 * Creates the namespace and attaches the implementation of the class in it
+	 *
+	 * @function _$chain
+	 * @param {Object} transitory - an _$transitory object
+	 * @param {Function} implementation - the implementation of the class
+	 */
+	function _$chain(transitory, implementation) {
+		var
+			  ns = transitory.namespace.split('.')
+			, dependencies = transitory.heritage || null
+			, clone = {}
+			, scope = _chain;
+		
+		// creates the namespace
+		do {
+			// access the namespace if already created, to properly chain
+			scope[ns[0]] = scope[ns[0]] || {};
+			scope = scope[ns.shift()];
+		} while (ns.length > 0);
+		
+		scope = (!!!dependencies ? implementation : _$inject(implementation, dependencies));
+		scope.prototype.aer$class = transitory.namespace;
+		
+		transitory.constructor = scope;
+		
+		// register a direct pointer
+		_classes[transitory.namespace] = {
+			  regex : ''
+			, constructor : transitory.constructor
+			, ready : true
+		};
+	}
+	
+	/**
+	 * @function main
+	 */
+	function _$main() {
+		_async(null, function(state) {
+			
+		});
+	}
+	
+	// installing the primitives
+	_directives['@class']('Object')['@'](Object);
+	_directives['@class']('Number')['@'](Number);
+	_directives['@class']('Array')['@'](Array);
+	_directives['@class']('String')['@'](String);
+	_directives['@class']('Boolean')['@'](Boolean);
+	_directives['@class']('RegExp')['@'](RegExp);
+	_directives['@class']('Error')['@'](Error);
+	_directives['@class']('Function')['@'](Function);
+	_directives['@class']('Date')['@'](Date);
+	
+	// nodeJS installation
+	try { module.exports = aer } catch (e) {}
+	// browser installation
+	global.aer = _directives;
+})(window /* browser environment */);
+
