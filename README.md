@@ -1,7 +1,2 @@
-That's not a fuck'n Promise!!!
-========
+Async state machine and some methods
 
-tsnafp js
-
-
-But you can rename it, if u wish xD
