@@ -36,13 +36,6 @@
  *			}
  *		}, 1000);
  *
- * @example
- *		// Exemplos de utilização dos atributos de state.
- *		// Lembrando que state também é acessível, neste exemplo, por someAsync.state
- *		var someAsync = _async(function(state) {
- *			if(state.)
- *		});
- *
  *		
  *
  * @function _interval
