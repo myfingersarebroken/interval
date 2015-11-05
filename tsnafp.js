@@ -166,32 +166,6 @@ function _interval(userData, func, wait, times) {
 			return null;
 		};
 		
-		/**
-		 * Uma implementação de promises
-		 *
-		 * @method then
-		 * @memberOf state
-		 * @return {null}
-		 */
-		/*
-		state.then = function(obj) {
-			state.promise = {
-				  status : 'PENDING'
-				, onFulfillFn : obj.onFulfilled || function onFulfilled() {}
-				, onRejectFn : obj.onRejected || function onRejected() {}
-				, reason : null
-				, value : null
-			}
-			
-			// retornamos um _async que irá observar a primeira chamada
-			return _async(function(promise) {
-				if (state.lastComputedError != null) {
-					return state.promise.onRejectFn();
-				}
-			}, w);
-		};
-		*/
-		
 		// repassamos uma referência de state para manipulação fora do closure
 		i.state = state;
 		// apenas mais uma referência para facilitar o acesso
