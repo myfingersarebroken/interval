@@ -87,7 +87,6 @@ function _interval(userData, func, wait, times) {
 	//	 , promise : false
 	};
 	
-	// utilizamos este closure para blindar o escopo de state
     var interv = (function(w, t) {
 		function i() {
 			if (t == 0) { state.isRunning = false; }
